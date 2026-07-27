@@ -1,8 +1,13 @@
 {
   "name": "lospor-browser",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "license": "AGPL-3.0-or-later",
+  "overrides": {
+    "postcss": "8.5.23",
+    "sharp": "0.35.3",
+    "minimatch": "10.2.6"
+  },
   "scripts": {
     "dev": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next dev --port 3003",
     "build": "next build",
@@ -16,7 +21,7 @@
   "dependencies": {
     "@lospor/core": "github:kaloyandjunow-prog/lospor-core#v7.2.0",
     "lucide-react": "^1.14.0",
-    "next": "16.2.11",
+    "next": "16.2.12",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "recharts": "^3.8.1"
@@ -30,8 +35,8 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "cross-env": "^10.1.0",
-    "eslint": "^9",
-    "eslint-config-next": "16.2.11",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "16.2.12",
     "jsdom": "^29.1.1",
     "tailwindcss": "^4",
     "typescript": "^5.9.3",

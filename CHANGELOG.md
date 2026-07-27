@@ -1,5 +1,11 @@
 # Changelog - LOSPOR Database
 
+## [0.2.1] - 2026-07-27
+
+- Updated Next.js and its PostCSS/Sharp runtime chain to patched versions.
+- Cleared the Database dependency audit and moved CI to Node.js 24 actions.
+- Research permissions, disclosure controls, and persisted data are unchanged.
+
 ## [0.2.0] - 2026-07-27
 
 - Case and export navigation now follows each action's individual grant and
