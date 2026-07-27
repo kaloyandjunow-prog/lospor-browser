@@ -41,7 +41,7 @@ export async function apiServerFetch(path: string, init: RequestInit = {}) {
     headers.set("origin", DATABASE_ORIGIN)
   }
   headers.set("x-lospor-client", "database")
-  headers.set("x-lospor-client-version", "0.1.0")
+  headers.set("x-lospor-client-version", "0.2.0")
   return fetch(`${API_INTERNAL_URL}${path}`, {
     ...init,
     headers,

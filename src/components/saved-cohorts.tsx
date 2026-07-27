@@ -4,16 +4,20 @@ import { useEffect, useState } from "react"
 import { Copy, Play, RefreshCw, Trash2 } from "lucide-react"
 import { clinicalDisplayLabel } from "@lospor/core/display"
 import type {
+  ResearchCaseQueryResponse,
+  ResearchMetadata,
   ResearchQueryResponse,
   SavedResearchCohort,
 } from "@lospor/core/research"
 import { apiJson } from "@/lib/client-api"
+import { formatResearchCount } from "@/lib/research-disclosure"
 import { CasesTable } from "./cases-table"
 import { useLocale } from "./locale-provider"
 
-export function SavedCohorts() {
+export function SavedCohorts({ metadata }: { metadata: ResearchMetadata }) {
   const { locale, message } = useLocale()
   const [items, setItems] = useState<SavedResearchCohort[]>([])
+  const [previewCases, setPreviewCases] = useState<ResearchCaseQueryResponse | null>(null)
   const [preview, setPreview] = useState<ResearchQueryResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -43,7 +47,7 @@ export function SavedCohorts() {
     setLoading(true)
     setError("")
     try {
-      setPreview(await apiJson<ResearchQueryResponse>("/research/query", {
+      const request = {
         method: "POST",
         body: JSON.stringify({
           cohort: item.definition,
@@ -52,7 +56,15 @@ export function SavedCohorts() {
           metrics: ["caseCount", "meanAgeYears", "meanDurationMinutes", "complicationRate"],
           distributions: [],
         }),
-      }))
+      }
+      const [aggregate, inspected] = await Promise.all([
+        apiJson<ResearchQueryResponse>("/research/query", request),
+        metadata.permissions.inspectCases
+          ? apiJson<ResearchCaseQueryResponse>("/research/cases/query", request)
+          : Promise.resolve(null),
+      ])
+      setPreview(aggregate)
+      setPreviewCases(inspected)
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Cohort run failed")
     } finally {
@@ -120,9 +132,11 @@ export function SavedCohorts() {
         <>
           <div className="panel-header">
             <h3>{message("savedPreview")}</h3>
-            <span className="pill info">{preview.matchingCases} {message("casesLabel")}</span>
+            <span className="pill info">{formatResearchCount(preview.matchingCaseCount)} {message("casesLabel")}</span>
           </div>
-          <CasesTable cases={preview.cases} />
+          {previewCases
+            ? <CasesTable cases={previewCases.cases} />
+            : <div className="notice">{message("aggregateOnly")}</div>}
         </>
       )}
     </section>

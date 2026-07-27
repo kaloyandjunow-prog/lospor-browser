@@ -1,5 +1,5 @@
 import { cookies } from "next/headers"
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import {
   clinicalDisplayLabel,
   resolveClinicalDisplay,
@@ -27,6 +27,7 @@ export default async function ResearchCasePage({
   const message = (key: TranslationKey) => messages[locale][key]
   const response = await apiServerFetch(`/v1/research/cases/${encodeURIComponent(id)}`)
   if (response.status === 404) notFound()
+  if (response.status === 403) redirect("/access-denied")
   if (!response.ok) throw new Error("Unable to load the research case")
   const item = await response.json() as ResearchCaseDetail
   const sex = item.sex ? optionDisplayLabel("SEX", item.sex, locale) : "—"

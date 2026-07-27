@@ -7,7 +7,7 @@ The application never connects directly to PostgreSQL. It uses the versioned
 LOSPOR API for authentication, governed cohort queries, pseudonymous case
 inspection, quality reports, saved cohorts, benchmarks, and exports.
 
-Browser v0.1.0 is compatible with LOSPOR API and Core v7.1.0.
+Browser v0.2.0 is compatible with LOSPOR API and Core v7.2.0.
 
 ## Local development
 
