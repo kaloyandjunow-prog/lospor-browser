@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest"
-import { buildCohort } from "./cohort-builder"
+import { buildCohort, researchMonthEnd, researchMonthStart } from "./cohort-builder"
 
 describe("cohort builder", () => {
   it("maps visible fields to the shared structured research contract", () => {
     const cohort = buildCohort({
-      from: "2026-01-01",
-      to: "2026-06-30",
+      from: "2026-01",
+      to: "2026-06",
       ageMin: "40",
       ageMax: "75",
       bmiMin: "",
@@ -70,5 +70,13 @@ describe("cohort builder", () => {
       completeness: "",
     })
     expect(cohort).toEqual({ version: 1, filters: { statuses: ["COMPLETE"] } })
+  })
+
+  it("expands visible research months to inclusive API date boundaries", () => {
+    expect(researchMonthStart("2026-02")).toBe("2026-02-01")
+    expect(researchMonthEnd("2026-02")).toBe("2026-02-28")
+    expect(researchMonthEnd("2028-02")).toBe("2028-02-29")
+    expect(researchMonthStart("2026-13")).toBeUndefined()
+    expect(researchMonthEnd("not-a-month")).toBeUndefined()
   })
 })

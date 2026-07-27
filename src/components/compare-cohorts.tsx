@@ -8,6 +8,7 @@ import type {
   ResearchComparisonResponse,
 } from "@lospor/core/research"
 import { apiJson } from "@/lib/client-api"
+import { formatOptionalResearchCount } from "@/lib/research-disclosure"
 import { useLocale } from "./locale-provider"
 
 type Side = {
@@ -104,7 +105,7 @@ export function CompareCohorts() {
         <section className="panel">
           <div className="panel-header">
             <h3>{message("comparison")}</h3>
-            <span className="scope-label">{result.leftCount} vs {result.rightCount} {message("casesLabel")}</span>
+            <span className="scope-label">{formatOptionalResearchCount(result.leftCount, result.leftCaseCount)} vs {formatOptionalResearchCount(result.rightCount, result.rightCaseCount)} {message("casesLabel")}</span>
           </div>
           <div className="table-wrap">
             <table>

@@ -20,15 +20,16 @@ import type { ResearchMetadata } from "@lospor/core/research"
 import type { SessionUser } from "@/lib/api"
 import { LanguageButton, useLocale } from "./locale-provider"
 import { formatResearchScope } from "@/lib/research-scope"
+import { canViewResearchNavigation } from "@/lib/research-ui-policy"
 
 const items = [
-  { href: "/overview", key: "overview", icon: LayoutDashboard },
-  { href: "/cohorts", key: "cohorts", icon: SlidersHorizontal },
-  { href: "/compare", key: "compare", icon: GitCompareArrows },
-  { href: "/cases", key: "cases", icon: Files },
-  { href: "/quality", key: "quality", icon: ShieldCheck },
-  { href: "/benchmarks", key: "benchmarks", icon: BarChart3 },
-  { href: "/exports", key: "exports", icon: FileDown },
+  { href: "/overview", key: "overview", icon: LayoutDashboard, permission: null },
+  { href: "/cohorts", key: "cohorts", icon: SlidersHorizontal, permission: null },
+  { href: "/compare", key: "compare", icon: GitCompareArrows, permission: null },
+  { href: "/cases", key: "cases", icon: Files, permission: "inspectCases" },
+  { href: "/quality", key: "quality", icon: ShieldCheck, permission: null },
+  { href: "/benchmarks", key: "benchmarks", icon: BarChart3, permission: null },
+  { href: "/exports", key: "exports", icon: FileDown, permission: "export" },
 ] as const
 
 export function WorkspaceShell({
@@ -43,10 +44,16 @@ export function WorkspaceShell({
   const pathname = usePathname()
   const router = useRouter()
   const { locale, message } = useLocale()
-  const active = [...items, { href: "/governance", key: "governance" as const, icon: Database }]
+  const visibleItems = items.filter(item => canViewResearchNavigation(metadata.permissions, item.permission))
+  const active = [...visibleItems, { href: "/governance", key: "governance" as const, icon: Database }]
     .find(item => pathname.startsWith(item.href))
-  const scopeLabel = formatResearchScope(metadata.scope, message("allInstitutions"))
-  const scopeTitle = metadata.scope.institutionLabels.join(", ")
+  const actionScope = pathname.startsWith("/cases")
+    ? metadata.scopes.inspectCases
+    : pathname.startsWith("/exports")
+      ? metadata.scopes.export
+      : metadata.scopes.query
+  const scopeLabel = formatResearchScope(actionScope, message("allInstitutions"))
+  const scopeTitle = actionScope.institutionLabels.join(", ")
 
   return (
     <div className="workspace">
@@ -60,7 +67,7 @@ export function WorkspaceShell({
           </span>
         </Link>
         <nav className="side-nav" aria-label="Research navigation">
-          {items.map(item => {
+          {visibleItems.map(item => {
             const Icon = item.icon
             const selected = pathname.startsWith(item.href)
             return (

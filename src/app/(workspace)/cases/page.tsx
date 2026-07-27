@@ -1,5 +1,6 @@
 import Link from "next/link"
-import type { ResearchQueryResponse } from "@lospor/core/research"
+import { redirect } from "next/navigation"
+import type { ResearchCaseQueryResponse, ResearchMetadata } from "@lospor/core/research"
 import { apiServerJson } from "@/lib/api"
 import { CasesTable } from "@/components/cases-table"
 import { PageHeading } from "@/components/page-heading"
@@ -12,7 +13,10 @@ export default async function CasesPage({
   const params = await searchParams
   const page = Math.max(1, Number(params.page) || 1)
   const take = 50
-  const result = await apiServerJson<ResearchQueryResponse>("/v1/research/query", {
+  const metadata = await apiServerJson<ResearchMetadata>("/v1/research/metadata")
+  if (!metadata.permissions.inspectCases) redirect("/access-denied")
+
+  const result = await apiServerJson<ResearchCaseQueryResponse>("/v1/research/cases/query", {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({

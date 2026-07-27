@@ -5,16 +5,20 @@ import { BookmarkPlus, Play, RotateCcw, Save } from "lucide-react"
 import { clinicalDisplayLabel } from "@lospor/core/display"
 import type {
   ResearchCohortDefinition,
+  ResearchCaseQueryResponse,
+  ResearchMetadata,
   ResearchQueryResponse,
   SavedResearchCohort,
 } from "@lospor/core/research"
 import { apiJson } from "@/lib/client-api"
+import { formatResearchCount } from "@/lib/research-disclosure"
 import {
   complicationChoices,
   optionChoices,
 } from "@/lib/clinical-display"
 import { CasesTable } from "./cases-table"
 import { ClinicalMultiSelect } from "./clinical-multi-select"
+import { ClinicalSearchSelect } from "./clinical-search-select"
 import { DistributionChart } from "./distribution-chart"
 import { MetricCard } from "./metric-card"
 import { useLocale } from "./locale-provider"
@@ -78,18 +82,34 @@ function number(value: string) {
   return Number.isFinite(parsed) ? parsed : undefined
 }
 
+export function researchMonthStart(value: string): string | undefined {
+  const match = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(value)
+  return match ? `${match[1]}-${match[2]}-01` : undefined
+}
+
+export function researchMonthEnd(value: string): string | undefined {
+  const match = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(value)
+  if (!match) return undefined
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const finalDay = new Date(Date.UTC(year, month, 0)).getUTCDate()
+  return `${match[1]}-${match[2]}-${String(finalDay).padStart(2, "0")}`
+}
+
 export function buildCohort(form: FormState): ResearchCohortDefinition {
   const ageMin = number(form.ageMin)
   const ageMax = number(form.ageMax)
   const bmiMin = number(form.bmiMin)
   const bmiMax = number(form.bmiMax)
+  const finalizedFrom = researchMonthStart(form.from)
+  const finalizedTo = researchMonthEnd(form.to)
   return {
     version: 1,
     filters: {
       statuses: ["COMPLETE"],
-      ...(form.from || form.to ? { finalized: {
-        ...(form.from ? { from: form.from } : {}),
-        ...(form.to ? { to: form.to } : {}),
+      ...(finalizedFrom || finalizedTo ? { finalized: {
+        ...(finalizedFrom ? { from: finalizedFrom } : {}),
+        ...(finalizedTo ? { to: finalizedTo } : {}),
       } } : {}),
       ...(ageMin !== undefined || ageMax !== undefined ? { ageYears: {
         ...(ageMin !== undefined ? { min: ageMin } : {}),
@@ -118,10 +138,11 @@ export function buildCohort(form: FormState): ResearchCohortDefinition {
   }
 }
 
-export function CohortBuilder() {
+export function CohortBuilder({ metadata }: { metadata: ResearchMetadata }) {
   const { locale, message } = useLocale()
   const [form, setForm] = useState<FormState>(EMPTY)
   const [result, setResult] = useState<ResearchQueryResponse | null>(null)
+  const [caseResult, setCaseResult] = useState<ResearchCaseQueryResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [saveOpen, setSaveOpen] = useState(false)
@@ -143,7 +164,7 @@ export function CohortBuilder() {
     setLoading(true)
     setError("")
     try {
-      setResult(await apiJson<ResearchQueryResponse>("/research/query", {
+      const request = {
         method: "POST",
         body: JSON.stringify({
           cohort,
@@ -162,7 +183,15 @@ export function CohortBuilder() {
           ],
           distributions: ["asa", "procedure", "diagnosis", "technique", "disposition"],
         }),
-      }))
+      }
+      const [aggregate, inspected] = await Promise.all([
+        apiJson<ResearchQueryResponse>("/research/query", request),
+        metadata.permissions.inspectCases
+          ? apiJson<ResearchCaseQueryResponse>("/research/cases/query", request)
+          : Promise.resolve(null),
+      ])
+      setResult(aggregate)
+      setCaseResult(inspected)
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Query failed")
     } finally {
@@ -205,6 +234,7 @@ export function CohortBuilder() {
               onClick={() => {
                 setForm(EMPTY)
                 setResult(null)
+                setCaseResult(null)
                 setError("")
               }}
             >
@@ -220,8 +250,8 @@ export function CohortBuilder() {
         </div>
         <div className="panel-body">
           <div className="filter-grid">
-            <Field label={message("finalizedFrom")}> <input className="input" type="date" value={form.from} onChange={e => set("from", e.target.value)} /></Field>
-            <Field label={message("finalizedTo")}> <input className="input" type="date" value={form.to} onChange={e => set("to", e.target.value)} /></Field>
+            <Field label={message("finalizedFrom")}><input className="input" type="month" value={form.from} onChange={e => set("from", e.target.value)} /></Field>
+            <Field label={message("finalizedTo")}><input className="input" type="month" value={form.to} onChange={e => set("to", e.target.value)} /></Field>
             <Field label={message("ageFrom")}> <input className="input" inputMode="numeric" value={form.ageMin} onChange={e => set("ageMin", e.target.value)} /></Field>
             <Field label={message("ageTo")}> <input className="input" inputMode="numeric" value={form.ageMax} onChange={e => set("ageMax", e.target.value)} /></Field>
             <Field label={message("bmiFrom")}> <input className="input" inputMode="decimal" value={form.bmiMin} onChange={e => set("bmiMin", e.target.value)} /></Field>
@@ -237,10 +267,46 @@ export function CohortBuilder() {
                 <option value="">{message("any")}</option><option value="true">{message("emergency")}</option><option value="false">{message("elective")}</option>
               </select>
             </Field>
-            <Field label={message("diagnosisIcd")}> <input className="input" placeholder="C61, I10" value={form.diagnosisCode} onChange={e => set("diagnosisCode", e.target.value)} /></Field>
+            <Field label={message("diagnosisIcd")}>
+              <ClinicalSearchSelect
+                kind="icd10"
+                endpoint="/search/icd10"
+                locale={locale}
+                value={form.diagnosisCode}
+                onChange={value => set("diagnosisCode", value)}
+                searchLabel={message("searchOptions")}
+                loadingLabel={message("loading")}
+                noResultsLabel={message("searchNoResults")}
+                minimumLabel={message("searchMinimum")}
+              />
+            </Field>
             <Field label={message("diagnosisContains")}> <input className="input" value={form.diagnosisText} onChange={e => set("diagnosisText", e.target.value)} /></Field>
-            <Field label={message("comorbidityIcd")}> <input className="input" placeholder="I10, E11" value={form.comorbidityCode} onChange={e => set("comorbidityCode", e.target.value)} /></Field>
-            <Field label={message("procedureCode")}> <input className="input" value={form.procedureCode} onChange={e => set("procedureCode", e.target.value)} /></Field>
+            <Field label={message("comorbidityIcd")}>
+              <ClinicalSearchSelect
+                kind="icd10"
+                endpoint="/search/icd10"
+                locale={locale}
+                value={form.comorbidityCode}
+                onChange={value => set("comorbidityCode", value)}
+                searchLabel={message("searchOptions")}
+                loadingLabel={message("loading")}
+                noResultsLabel={message("searchNoResults")}
+                minimumLabel={message("searchMinimum")}
+              />
+            </Field>
+            <Field label={message("procedureCode")}>
+              <ClinicalSearchSelect
+                kind="procedure"
+                endpoint="/search/procedures"
+                locale={locale}
+                value={form.procedureCode}
+                onChange={value => set("procedureCode", value)}
+                searchLabel={message("searchOptions")}
+                loadingLabel={message("loading")}
+                noResultsLabel={message("searchNoResults")}
+                minimumLabel={message("searchMinimum")}
+              />
+            </Field>
             <Field label={message("procedureContains")}> <input className="input" value={form.procedureText} onChange={e => set("procedureText", e.target.value)} /></Field>
             <Field label={message("techniqueIds")}>
               <ClinicalMultiSelect
@@ -269,7 +335,19 @@ export function CohortBuilder() {
                 searchLabel={message("searchOptions")}
               />
             </Field>
-            <Field label={message("medicationInn")}> <input className="input" value={form.medication} onChange={e => set("medication", e.target.value)} /></Field>
+            <Field label={message("medicationInn")}>
+              <ClinicalSearchSelect
+                kind="medication"
+                endpoint="/search/drugs"
+                locale={locale}
+                value={form.medication}
+                onChange={value => set("medication", value)}
+                searchLabel={message("searchOptions")}
+                loadingLabel={message("loading")}
+                noResultsLabel={message("searchNoResults")}
+                minimumLabel={message("searchMinimum")}
+              />
+            </Field>
             <Field label={message("complicationContains")}>
               <ClinicalMultiSelect
                 value={form.complication}
@@ -295,7 +373,7 @@ export function CohortBuilder() {
               <input className="input" style={{ maxWidth: 280 }} placeholder={message("cohortName")} value={saveName} onChange={e => setSaveName(e.target.value)} />
               <select className="select" style={{ width: 160 }} value={visibility} onChange={e => setVisibility(e.target.value as typeof visibility)}>
                 <option value="PRIVATE">{message("private")}</option>
-                <option value="INSTITUTION">{message("institution")}</option>
+                {metadata.permissions.shareInstitutionCohorts && <option value="INSTITUTION">{message("institution")}</option>}
               </select>
               <button className="button primary" type="button" onClick={save} disabled={loading || !saveName.trim()}>
                 <Save size={15} /> {message("saveCohort")}
@@ -324,31 +402,42 @@ export function CohortBuilder() {
           <section className="panel">
             <div className="panel-header">
               <h3>{message("matchingCases")}</h3>
-              <span className="pill info">{result.matchingCases} {message("casesLabel")}</span>
+              <span className="pill info">{formatResearchCount(result.matchingCaseCount)} {message("casesLabel")}</span>
             </div>
-            <CasesTable cases={result.cases} />
+            {!metadata.permissions.inspectCases && (
+              <div className="notice">{message("aggregateOnly")}</div>
+            )}
+          </section>
+          {caseResult && (
+            <section className="panel">
+              <div className="panel-header">
+                <h3>{message("authorizedRecords")}</h3>
+                <span className="pill info">{caseResult.matchingCases} {message("casesLabel")}</span>
+              </div>
+              <CasesTable cases={caseResult.cases} />
             <div className="toolbar end" style={{ padding: 12 }}>
               <button
                 className="button"
                 type="button"
-                disabled={result.pagination.skip === 0 || loading}
-                onClick={() => run(Math.max(0, result.pagination.skip - result.pagination.take))}
+                disabled={caseResult.pagination.skip === 0 || loading}
+                onClick={() => run(Math.max(0, caseResult.pagination.skip - caseResult.pagination.take))}
               >
                 {message("previous")}
               </button>
               <span className="scope-label">
-                {result.pagination.skip + 1}–{Math.min(result.pagination.total, result.pagination.skip + result.pagination.take)} of {result.pagination.total}
+                {caseResult.pagination.skip + 1}–{Math.min(caseResult.pagination.total, caseResult.pagination.skip + caseResult.pagination.take)} of {caseResult.pagination.total}
               </span>
               <button
                 className="button"
                 type="button"
-                disabled={!result.pagination.hasMore || loading}
-                onClick={() => run(result.pagination.skip + result.pagination.take)}
+                disabled={!caseResult.pagination.hasMore || loading}
+                onClick={() => run(caseResult.pagination.skip + caseResult.pagination.take)}
               >
                 {message("next")}
               </button>
             </div>
           </section>
+          )}
         </>
       )}
     </div>

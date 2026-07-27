@@ -249,6 +249,87 @@ a { color: inherit; text-decoration: none; }
 }
 .clinical-select-option.selected .clinical-select-check { background: var(--teal); border-color: var(--teal); color: white; }
 .clinical-select-empty { min-height: 70px; padding: 12px; }
+.clinical-search { position: relative; min-width: 0; }
+.clinical-search-control {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 3px 6px;
+  cursor: text;
+}
+.clinical-search-control:focus-within {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 2px rgba(15,118,110,.12);
+}
+.clinical-search-tag {
+  max-width: 100%;
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 4px;
+  background: #e3f1ee;
+  color: #155f58;
+  padding: 2px 4px 2px 7px;
+  font-size: 10px;
+  font-weight: 750;
+}
+.clinical-search-tag > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.clinical-search-tag button {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  cursor: pointer;
+}
+.clinical-search-input-wrap {
+  min-width: 110px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+}
+.clinical-search-input-wrap input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  padding: 4px 0;
+}
+.clinical-search-menu { width: 100%; }
+.clinical-search-status { color: var(--muted); padding: 10px; font-size: 11px; }
+.clinical-search-option {
+  width: 100%;
+  min-height: 42px;
+  display: grid;
+  grid-template-columns: 20px minmax(0,1fr);
+  align-items: center;
+  gap: 7px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ink);
+  padding: 6px 7px;
+  text-align: left;
+  cursor: pointer;
+}
+.clinical-search-option:hover, .clinical-search-option.active { background: #edf6f4; }
+.clinical-search-option-label { min-width: 0; display: grid; gap: 2px; }
+.clinical-search-option-label strong { overflow-wrap: anywhere; font-size: 11px; }
+.clinical-search-option-label small { color: var(--muted); overflow-wrap: anywhere; font-size: 9px; }
 .filter-grid { display: grid; grid-template-columns: repeat(4, minmax(145px, 1fr)); gap: 11px; }
 .toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .toolbar.end { justify-content: flex-end; }

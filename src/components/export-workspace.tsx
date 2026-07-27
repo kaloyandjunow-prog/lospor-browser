@@ -11,6 +11,11 @@ import type {
 } from "@lospor/core/research"
 import { apiJson } from "@/lib/client-api"
 import { useLocale } from "./locale-provider"
+import {
+  canDownloadResearchExport,
+  canOfferOmopExport,
+  researchExportsNeedPolling,
+} from "@/lib/research-ui-policy"
 
 export function ExportWorkspace() {
   const { locale, message } = useLocale()
@@ -27,9 +32,13 @@ export function ExportWorkspace() {
     () => cohorts.find(item => item.id === cohortId),
     [cohorts, cohortId],
   )
+  const hasPending = useMemo(
+    () => researchExportsNeedPolling(history),
+    [history],
+  )
 
-  async function load() {
-    setLoading(true)
+  async function load(showLoading = true) {
+    if (showLoading) setLoading(true)
     setError("")
     try {
       const [meta, saved, exports] = await Promise.all([
@@ -43,7 +52,7 @@ export function ExportWorkspace() {
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not load exports")
     } finally {
-      setLoading(false)
+      if (showLoading) setLoading(false)
     }
   }
 
@@ -66,29 +75,26 @@ export function ExportWorkspace() {
     return () => { active = false }
   }, [])
 
-  async function download(record: ResearchExportRecord) {
-    setLoading(true)
-    setError("")
-    try {
-      const response = await fetch(`/api/research/exports/${record.id}/download`)
-      if (!response.ok) {
-        const body = await response.json().catch(() => ({}))
-        throw new Error(body.error ?? `Export failed (${response.status})`)
-      }
-      const disposition = response.headers.get("content-disposition")
-      const filename = disposition?.match(/filename="([^"]+)"/)?.[1] ?? `lospor_export.${record.format.includes("csv") ? "csv" : "json"}`
-      const blob = await response.blob()
-      const url = URL.createObjectURL(blob)
-      const anchor = document.createElement("a")
-      anchor.href = url
-      anchor.download = filename
-      anchor.click()
-      URL.revokeObjectURL(url)
-      await load()
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Download failed")
-      setLoading(false)
-    }
+  useEffect(() => {
+    if (!hasPending) return
+    const timer = window.setInterval(() => {
+      apiJson<ResearchExportRecord[]>("/research/exports")
+        .then(setHistory)
+        .catch(caught => {
+          setError(caught instanceof Error ? caught.message : "Could not refresh exports")
+        })
+    }, 2000)
+    return () => window.clearInterval(timer)
+  }, [hasPending])
+
+  function download(record: ResearchExportRecord) {
+    if (!canDownloadResearchExport(record)) return
+    const anchor = document.createElement("a")
+    anchor.href = `/api/research/exports/${record.id}/download`
+    if (record.filename) anchor.download = record.filename
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
   }
 
   async function create() {
@@ -104,7 +110,7 @@ export function ExportWorkspace() {
         body: JSON.stringify({ name, format, definition }),
       })
       setHistory(current => [record, ...current])
-      await download(record)
+      setLoading(false)
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Export creation failed")
       setLoading(false)
@@ -133,8 +139,8 @@ export function ExportWorkspace() {
               <select className="select" value={format} onChange={e => setFormat(e.target.value as ResearchExportFormat)}>
                 <option value="csv">Research CSV</option>
                 <option value="json">Research JSON</option>
-                {metadata?.permissions.exportOmop && <option value="omop-csv">OMOP multi-table CSV</option>}
-                {metadata?.permissions.exportOmop && <option value="omop-json">OMOP JSON</option>}
+                {metadata && canOfferOmopExport(metadata.permissions) && <option value="omop-csv">OMOP multi-table CSV ZIP</option>}
+                {metadata && canOfferOmopExport(metadata.permissions) && <option value="omop-json">OMOP JSON</option>}
               </select>
             </div>
           </div>
@@ -151,7 +157,7 @@ export function ExportWorkspace() {
       <section className="panel">
         <div className="panel-header">
           <h3>{message("exportHistory")}</h3>
-          <button className="icon-button" type="button" title={message("refresh")} onClick={load}><RefreshCw size={16} /></button>
+          <button className="icon-button" type="button" title={message("refresh")} onClick={() => load()}><RefreshCw size={16} /></button>
         </div>
         {!history.length && !loading ? <div className="empty">{message("noExports")}</div> : (
           <div className="table-wrap">
@@ -165,7 +171,17 @@ export function ExportWorkspace() {
                   <td><span className={`pill ${item.status === "COMPLETE" ? "good" : item.status === "FAILED" ? "bad" : "warn"}`}>{clinicalDisplayLabel("exportStatus", item.status, locale)}</span></td>
                   <td className="number">{item.rowCount ?? "—"}</td>
                   <td className="mono">{item.checksum ? `${item.checksum.slice(0, 14)}…` : "—"}</td>
-                  <td><button className="icon-button" type="button" title={message("download")} disabled={loading} onClick={() => download(item)}><Download size={16} /></button></td>
+                  <td>
+                    <button
+                      className="icon-button"
+                      type="button"
+                      title={message("download")}
+                      disabled={loading || !canDownloadResearchExport(item)}
+                      onClick={() => download(item)}
+                    >
+                      <Download size={16} />
+                    </button>
+                  </td>
                 </tr>
               ))}</tbody>
             </table>
