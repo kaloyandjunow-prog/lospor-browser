@@ -10,7 +10,8 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit --pretty false",
     "test": "vitest run",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "e2e:smoke": "playwright test --config playwright.smoke.config.ts"
   },
   "dependencies": {
     "@lospor/core": "github:kaloyandjunow-prog/lospor-core#v7.2.0",
