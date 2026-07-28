@@ -13,8 +13,23 @@ export function researchExportsNeedPolling(records: ResearchExportRecord[]): boo
   return records.some(record => record.status === "PENDING" || record.status === "RUNNING")
 }
 
-export function canDownloadResearchExport(record: ResearchExportRecord): boolean {
-  return record.status === "COMPLETE" && !record.legacy
+export function researchExportArtifactExpired(
+  record: ResearchExportRecord,
+  now = Date.now(),
+): boolean {
+  if (record.status !== "COMPLETE" || !record.expiresAt) return false
+  const expiresAt = Date.parse(record.expiresAt)
+  return Number.isFinite(expiresAt) && expiresAt <= now
+}
+
+export function canDownloadResearchExport(
+  record: ResearchExportRecord,
+  now = Date.now(),
+): boolean {
+  return record.status === "COMPLETE"
+    && !record.legacy
+    && record.artifactAvailable
+    && !researchExportArtifactExpired(record, now)
 }
 
 export function canOfferOmopExport(permissions: ResearchPermissionSet): boolean {
