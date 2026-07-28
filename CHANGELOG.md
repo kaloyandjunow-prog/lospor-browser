@@ -1,5 +1,12 @@
 # Changelog - LOSPOR Database
 
+## [0.3.0] - 2026-07-28
+
+- Export history shows each artifact retention deadline and clearly marks expired
+  or unavailable files while retaining checksums and generation history.
+- Download controls now follow the API artifact-availability contract and also
+  reject an expired timestamp in a stale Browser session.
+
 ## [0.2.1] - 2026-07-27
 
 - Updated Next.js and its PostCSS/Sharp runtime chain to patched versions.

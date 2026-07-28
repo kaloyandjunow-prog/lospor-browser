@@ -4,6 +4,7 @@ import {
   canDownloadResearchExport,
   canOfferOmopExport,
   canViewResearchNavigation,
+  researchExportArtifactExpired,
   researchExportsNeedPolling,
 } from "./research-ui-policy"
 
@@ -39,6 +40,9 @@ function exportRecord(overrides: Partial<ResearchExportRecord> = {}): ResearchEx
     byteSize: null,
     sourceVersion: "7.2.0",
     generatedAt: null,
+    revisionManifestVersion: 2,
+    expiresAt: null,
+    artifactAvailable: false,
     legacy: false,
     createdAt: "2026-07-27T00:00:00.000Z",
     completedAt: null,
@@ -63,8 +67,24 @@ describe("research Browser policy", () => {
     expect(researchExportsNeedPolling([exportRecord()])).toBe(true)
     expect(researchExportsNeedPolling([exportRecord({ status: "RUNNING" })])).toBe(true)
     expect(researchExportsNeedPolling([exportRecord({ status: "COMPLETE" })])).toBe(false)
-    expect(canDownloadResearchExport(exportRecord({ status: "COMPLETE" }))).toBe(true)
-    expect(canDownloadResearchExport(exportRecord({ status: "FAILED" }))).toBe(false)
-    expect(canDownloadResearchExport(exportRecord({ status: "COMPLETE", legacy: true }))).toBe(false)
+    expect(canDownloadResearchExport(exportRecord({ status: "COMPLETE", artifactAvailable: true }))).toBe(true)
+    expect(canDownloadResearchExport(exportRecord({ status: "FAILED", artifactAvailable: true }))).toBe(false)
+    expect(canDownloadResearchExport(exportRecord({ status: "COMPLETE", legacy: true, artifactAvailable: true }))).toBe(false)
+    expect(canDownloadResearchExport(exportRecord({ status: "COMPLETE", artifactAvailable: false }))).toBe(false)
+  })
+
+  it("blocks stale clients from downloading an expired artifact", () => {
+    const now = Date.parse("2026-07-28T12:00:00.000Z")
+    const record = exportRecord({
+      status: "COMPLETE",
+      artifactAvailable: true,
+      expiresAt: "2026-07-28T11:59:59.000Z",
+    })
+    expect(researchExportArtifactExpired(record, now)).toBe(true)
+    expect(canDownloadResearchExport(record, now)).toBe(false)
+    expect(researchExportArtifactExpired({
+      ...record,
+      expiresAt: "2026-07-28T12:00:01.000Z",
+    }, now)).toBe(false)
   })
 })

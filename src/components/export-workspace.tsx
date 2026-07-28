@@ -14,6 +14,7 @@ import { useLocale } from "./locale-provider"
 import {
   canDownloadResearchExport,
   canOfferOmopExport,
+  researchExportArtifactExpired,
   researchExportsNeedPolling,
 } from "@/lib/research-ui-policy"
 
@@ -162,7 +163,7 @@ export function ExportWorkspace() {
         {!history.length && !loading ? <div className="empty">{message("noExports")}</div> : (
           <div className="table-wrap">
             <table>
-              <thead><tr><th>{message("created")}</th><th>{message("name")}</th><th>{message("format")}</th><th>{message("status")}</th><th>{message("rows")}</th><th>SHA-256</th><th>{message("download")}</th></tr></thead>
+              <thead><tr><th>{message("created")}</th><th>{message("name")}</th><th>{message("format")}</th><th>{message("status")}</th><th>{message("rows")}</th><th>SHA-256</th><th>{message("availableUntil")}</th><th>{message("download")}</th></tr></thead>
               <tbody>{history.map(item => (
                 <tr key={item.id}>
                   <td>{new Date(item.createdAt).toLocaleString()}</td>
@@ -171,11 +172,26 @@ export function ExportWorkspace() {
                   <td><span className={`pill ${item.status === "COMPLETE" ? "good" : item.status === "FAILED" ? "bad" : "warn"}`}>{clinicalDisplayLabel("exportStatus", item.status, locale)}</span></td>
                   <td className="number">{item.rowCount ?? "—"}</td>
                   <td className="mono">{item.checksum ? `${item.checksum.slice(0, 14)}…` : "—"}</td>
+                  <td>{
+                    item.status !== "COMPLETE"
+                      ? "\u2014"
+                      : researchExportArtifactExpired(item)
+                        ? <span className="pill bad">{message("artifactExpired")}</span>
+                        : !item.artifactAvailable
+                          ? <span className="pill warn">{message("artifactUnavailable")}</span>
+                          : item.expiresAt
+                            ? new Date(item.expiresAt).toLocaleString(locale === "bg" ? "bg-BG" : "en-GB")
+                            : "\u2014"
+                  }</td>
                   <td>
                     <button
                       className="icon-button"
                       type="button"
-                      title={message("download")}
+                      title={canDownloadResearchExport(item)
+                        ? message("download")
+                        : researchExportArtifactExpired(item)
+                          ? message("artifactExpired")
+                          : message("artifactUnavailable")}
                       disabled={loading || !canDownloadResearchExport(item)}
                       onClick={() => download(item)}
                     >
