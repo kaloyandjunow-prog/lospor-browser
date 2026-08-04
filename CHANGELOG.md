@@ -1,5 +1,17 @@
 # Changelog - LOSPOR Database
 
+## [0.4.0] - 2026-08-04
+
+Released alongside LOSPOR v8.0.0.
+
+Requires `@lospor/core` v8.0.0.
+
+### Added
+
+- Pediatric mode is surfaced in cohort building and case views.
+- Clinical display terms are shared with the other apps, so a cohort reads the
+  same way as the record it came from.
+
 ## [0.3.0] - 2026-07-28
 
 - Export history shows each artifact retention deadline and clearly marks expired
