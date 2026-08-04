@@ -1,6 +1,6 @@
 {
   "name": "lospor-browser",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "license": "AGPL-3.0-or-later",
   "overrides": {
@@ -19,7 +19,7 @@
     "e2e:smoke": "playwright test --config playwright.smoke.config.ts"
   },
   "dependencies": {
-    "@lospor/core": "github:kaloyandjunow-prog/lospor-core#v7.3.0",
+    "@lospor/core": "github:kaloyandjunow-prog/lospor-core#v8.0.0",
     "lucide-react": "^1.14.0",
     "next": "16.2.12",
     "react": "19.2.4",
