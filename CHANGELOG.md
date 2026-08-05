@@ -1,5 +1,19 @@
 # Changelog - LOSPOR Database
 
+## [0.4.3] - 2026-08-05
+
+### Changed
+
+- Repinned to `@lospor/core` v8.3.0.
+
+### Fixed
+
+- The first sign-in of an end-to-end run is given room to compile the page it
+  lands on. The first test of every run failed and every repeat of the same test
+  passed: the first sign-in is also the first request for `/overview`, which the
+  dev server compiles on demand, and a five-second assertion expired while the
+  build was still finishing. It read as a broken login.
+
 ## [0.4.2] - 2026-08-05
 
 ### Changed
