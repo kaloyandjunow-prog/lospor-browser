@@ -1,5 +1,11 @@
 # Changelog - LOSPOR Database
 
+## [0.4.2] - 2026-08-05
+
+### Changed
+
+- Repinned to `@lospor/core` v8.2.1.
+
 ## [0.4.0] - 2026-08-04
 
 Released alongside LOSPOR v8.0.0.
