@@ -1,5 +1,12 @@
 # Changelog - LOSPOR Database
 
+## [0.4.4] - 2026-08-06
+
+### Changed
+
+- Repinned to `@lospor/core` v8.3.2. No behaviour change; the pin would
+  otherwise name a core version no other repo is running.
+
 ## [0.4.3] - 2026-08-05
 
 ### Changed
