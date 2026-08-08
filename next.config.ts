@@ -14,6 +14,11 @@ const config: NextConfig = {
   output: "standalone",
   allowedDevOrigins: ["127.0.0.1", ...localDevOrigins],
   transpilePackages: ["@lospor/core"],
+
+  // Pin the workspace root — see the note in lospor-app/next.config.ts. Turbopack
+  // has intermittently inferred the wrong root and then failed to resolve Next
+  // itself, panicking on every rebuild.
+  turbopack: { root: __dirname },
   async rewrites() {
     return {
       beforeFiles: [{
