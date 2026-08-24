@@ -1,6 +1,6 @@
 # Changelog - LOSPOR Database
 
-## [Unreleased] - 1.2.0
+## [0.6.0] - 2026-08-24 - 1.2.0 Browser wave
 
 ### Added
 
@@ -40,6 +40,11 @@
   shared cohort no longer appears mutable merely because it has an owner ID.
   Visibility is not silently rewritten when sharing permission changes, while
   the owner can still deliberately make the cohort private.
+
+### Changed
+
+- Migrated Vitest config to ESM (`vitest.config.mts`) and declared trusted
+  install scripts under npm 11's `allowScripts`.
 
 ## [0.5.0] - 2026-08-11
 
