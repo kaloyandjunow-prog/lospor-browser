@@ -45,7 +45,9 @@ test("cohort owner can edit metadata and delete the saved cohort", async ({ page
 
   const originalRow = page.getByRole("row").filter({ hasText: originalName })
   await expect(originalRow).toBeVisible()
-  await originalRow.getByTitle("Edit").click()
+  // getByTitle does substring matching by default, and this row has a second
+  // button titled "Edit cohort filters".
+  await originalRow.getByTitle("Edit", { exact: true }).click()
   const editForm = page.getByRole("form", { name: "Edit saved cohort" })
   await editForm.getByLabel("Name").fill(editedName)
   await editForm.getByLabel("Description").fill("Edited by the Browser E2E lifecycle")
@@ -79,15 +81,14 @@ test("does not pretend sign-out succeeded when revocation fails", async ({ page,
   })
   await page.getByTitle("Sign out").click()
   // Next.js's own route announcer also carries role="alert" (it announces
-  // "LOSPOR Database" on every navigation for screen readers), so a bare
-  // getByRole("alert") is ambiguous whenever both are on the page at once.
-  //
-  // This is also the first test in the file to click "Sign out" at all, so
-  // on a loaded CI runner the error path can render just past the default
-  // 5000ms -- the same first-render slack signIn() above already gives
-  // /overview, for the same reason.
-  await expect(page.getByRole("alert", { name: /Could not sign out/ }))
-    .toContainText("Could not sign out", { timeout: 15_000 })
+  // "LOSPOR Database" on every navigation for screen readers). A captured
+  // trace confirmed workspace-shell.tsx's own alert div is present with the
+  // exact right text from the very first snapshot of this assertion's poll --
+  // getByRole("alert", { name: ... }) still could not match it, for reasons
+  // that trace did not explain. The sidebar-error class is unique to this one
+  // element (see workspace-shell.tsx), so this targets it directly instead of
+  // going through role/name computation at all.
+  await expect(page.locator(".sidebar-error")).toContainText("Could not sign out")
   await expect(page).toHaveURL(/\/overview$/)
 })
 
