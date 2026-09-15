@@ -22,7 +22,11 @@ async function signIn(page: Page, email: string, callbackUrl = "/overview") {
 test("returns to the validated research page after sign-in", async ({ page, isMobile }) => {
   test.skip(isMobile, "Authenticated policy flow runs once in the desktop project")
   await signIn(page, E2E_EMAIL, "/cohorts")
-  await expect(page.getByRole("heading", { name: "Cohort builder" })).toBeVisible()
+  // Unlike every other page, the Cohorts page's own heading reuses the exact
+  // nav-label wording ("Cohort builder"), so the topbar's h1 (which mirrors
+  // whichever nav item is active) and this page's own h2 both match a plain
+  // name query. Scoped to level 2, the page's own heading, not the topbar's.
+  await expect(page.getByRole("heading", { name: "Cohort builder", level: 2 })).toBeVisible()
 })
 
 test("cohort owner can edit metadata and delete the saved cohort", async ({ page, isMobile }) => {
@@ -32,6 +36,10 @@ test("cohort owner can edit metadata and delete the saved cohort", async ({ page
   const suffix = Date.now().toString(36)
   const originalName = `E2E cohort ${suffix}`
   const editedName = `${originalName} edited`
+  // "Save" only toggles the save panel open; the name field it reveals is not
+  // in the DOM until then, and "Save cohort" is a second, separate button
+  // that actually commits.
+  await page.getByRole("button", { name: "Save", exact: true }).click()
   await page.getByLabel("Cohort name").fill(originalName)
   await page.getByRole("button", { name: "Save cohort" }).click()
 
@@ -70,7 +78,10 @@ test("does not pretend sign-out succeeded when revocation fails", async ({ page,
     await route.continue()
   })
   await page.getByTitle("Sign out").click()
-  await expect(page.getByRole("alert")).toContainText("Could not sign out")
+  // Next.js's own route announcer also carries role="alert" (it announces
+  // "LOSPOR Database" on every navigation for screen readers), so a bare
+  // getByRole("alert") is ambiguous whenever both are on the page at once.
+  await expect(page.getByRole("alert", { name: /Could not sign out/ })).toContainText("Could not sign out")
   await expect(page).toHaveURL(/\/overview$/)
 })
 
