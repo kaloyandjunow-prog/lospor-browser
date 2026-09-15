@@ -81,7 +81,13 @@ test("does not pretend sign-out succeeded when revocation fails", async ({ page,
   // Next.js's own route announcer also carries role="alert" (it announces
   // "LOSPOR Database" on every navigation for screen readers), so a bare
   // getByRole("alert") is ambiguous whenever both are on the page at once.
-  await expect(page.getByRole("alert", { name: /Could not sign out/ })).toContainText("Could not sign out")
+  //
+  // This is also the first test in the file to click "Sign out" at all, so
+  // on a loaded CI runner the error path can render just past the default
+  // 5000ms -- the same first-render slack signIn() above already gives
+  // /overview, for the same reason.
+  await expect(page.getByRole("alert", { name: /Could not sign out/ }))
+    .toContainText("Could not sign out", { timeout: 15_000 })
   await expect(page).toHaveURL(/\/overview$/)
 })
 
