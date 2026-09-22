@@ -2,6 +2,12 @@
 
 ## [0.7.4] - 2026-09-23
 
+### Security
+
+- **Resolved the Browser dependency gate findings.** Next.js is pinned to
+  16.3.6, Sharp to 0.35.4, and the affected transitive js-yaml dependency is
+  refreshed. A clean install now reports zero vulnerabilities.
+
 ### Changed
 
 - **Shared Core pin advanced to 9.10.3.** The Database Browser now consumes the
