@@ -1,5 +1,13 @@
 # Changelog - LOSPOR Database
 
+## [0.7.4] - 2026-09-23
+
+### Changed
+
+- **Shared Core pin advanced to 9.10.3.** The Database Browser now consumes the
+  same EHR import vocabulary baseline used by the coordinated Hospital 1.4.6
+  release.
+
 ## [0.7.3] - 2026-09-20
 
 ### Fixed
