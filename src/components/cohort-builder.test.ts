@@ -202,3 +202,12 @@ describe("the coded filters that replaced free text", () => {
     expect(buildCohort({ preopQuestion: "A12_PACEMAKER_ICD" }).filters.preopAnswers).toBeUndefined()
   })
 })
+
+describe("the hospital-system import filter", () => {
+  it("round-trips accepted and not accepted", () => {
+    expect(buildCohort({ ehrImported: "true" }).filters.ehrImported).toBe(true)
+    expect(buildCohort({ ehrImported: "false" }).filters.ehrImported).toBe(false)
+    expect(buildCohort({}).filters.ehrImported).toBeUndefined()
+    expect(formFromCohort(buildCohort({ ehrImported: "false" })).ehrImported).toBe("false")
+  })
+})

@@ -70,6 +70,7 @@ export type FormState = {
   intraopAtcCode: string
   preopQuestion: string
   preopStates: string
+  ehrImported: string
   complication: string
   disposition: string
   mappingStatus: string
@@ -113,6 +114,7 @@ const EMPTY: FormState = {
   intraopAtcCode: "",
   preopQuestion: "",
   preopStates: "",
+  ehrImported: "",
   complication: "",
   disposition: "",
   mappingStatus: "",
@@ -125,7 +127,7 @@ const EDITABLE_FILTER_KEYS: ReadonlyArray<keyof ResearchCohortDefinition["filter
   "highRisk", "ponv", "diagnosisCodes", "diagnosisText", "comorbidityCodes",
   "comorbidityText", "procedureCodes", "procedureText", "procedureGroups",
   "techniques", "positions", "airwayDevices", "monitoring", "medications",
-  "atcCodes", "intraopAtcCodes", "preopAnswers", "complications", "dispositions", "mappingStatuses",
+  "atcCodes", "intraopAtcCodes", "preopAnswers", "ehrImported", "complications", "dispositions", "mappingStatuses",
   "minimumCompleteness",
 ]
 
@@ -230,6 +232,7 @@ export function formFromCohort(definition: ResearchCohortDefinition): FormState 
     intraopAtcCode: formList(filters.intraopAtcCodes),
     preopQuestion: filters.preopAnswers?.[0]?.stableKey ?? "",
     preopStates: formList(filters.preopAnswers?.[0]?.states),
+    ehrImported: formBoolean(filters.ehrImported),
     complication: formList(filters.complications),
     disposition: formList(filters.dispositions),
     mappingStatus: formList(filters.mappingStatuses),
@@ -308,6 +311,7 @@ export function buildCohort(
       ...(form.medication ? { medications: list(form.medication) } : {}),
       ...(form.atcCode ? { atcCodes: list(form.atcCode) } : {}),
       ...(form.intraopAtcCode ? { intraopAtcCodes: list(form.intraopAtcCode) } : {}),
+      ...(form.ehrImported ? { ehrImported: form.ehrImported === "true" } : {}),
       ...(form.preopQuestion && list(form.preopStates)
         ? { preopAnswers: [{ stableKey: form.preopQuestion, states: list(form.preopStates)! }] }
         : {}),
@@ -729,6 +733,15 @@ export function CohortBuilder({
                 ))}
               </select>
             </Field>
+            {metadata.supportedFilters?.ehrImported && (
+              <Field label={message("ehrImportedFilter")}>
+                <select className="select" value={form.ehrImported} onChange={e => set("ehrImported", e.target.value)}>
+                  <option value="">{message("any")}</option>
+                  <option value="true">{message("ehrImportedYes")}</option>
+                  <option value="false">{message("ehrImportedNo")}</option>
+                </select>
+              </Field>
+            )}
             <Field label={message("preopAnswerFilter")}>
               <ClinicalMultiSelect
                 value={form.preopStates}
