@@ -64,7 +64,7 @@ export default async function ResearchCasePage({
           <div className="panel-header"><h3>{message("preopAnswersTitle")}</h3></div>
           <div className="table-wrap">
             <table>
-              <thead><tr><th>{message("preopQuestion")}</th><th>{message("preopAnswer")}</th><th>{message("preopSource")}</th><th>OMOP</th></tr></thead>
+              <thead><tr><th>{message("preopQuestion")}</th><th>{message("preopAnswer")}</th><th>{message("preopSource")}</th><th>{message("preopOmop")}</th></tr></thead>
               <tbody>{item.preoperativeAnswers.map(answer => (
                 <tr key={answer.stableKey}>
                   <td>{(locale === "bg" ? answer.labelBg : answer.labelEn) ?? answer.stableKey}</td>
