@@ -1,5 +1,20 @@
 # Changelog - LOSPOR Database
 
+## [0.8.2] - 2026-10-01
+
+### Changed
+
+- **Shared Core pin advanced to 9.13.6.** The Browser now follows the Core
+  release promoted first in the coordinated application release train.
+
+## [0.8.1] - 2026-09-30
+
+### Security
+
+- **Refreshed the high-severity transitive dependencies** `brace-expansion`
+  and `undici` to their patched releases, and advanced the shared Core pin to
+  9.13.5. Browser behavior is unchanged.
+
 ## [0.8.0] - 2026-09-24
 
 ### Changed
