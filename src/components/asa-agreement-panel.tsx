@@ -31,7 +31,7 @@ export function AsaAgreementPanel({ rows, locale }: { rows: readonly ResearchAsa
             </thead>
             <tbody>{rows.map(row => (
               <tr key={row.reasonCode}>
-                <td>{asaSuggestionRule(row.reasonCode)?.label ?? row.reasonCode}</td>
+                <td>{asaSuggestionRule(row.reasonCode, locale)?.label ?? row.reasonCode}</td>
                 <td><span className="pill info">ASA {row.suggested}</span></td>
                 <td className="number">{row.cases ?? message("hiddenSmallGroup")}</td>
                 <td className="number">{share(row.agreed, row.cases)}</td>

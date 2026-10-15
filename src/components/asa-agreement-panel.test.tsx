@@ -23,3 +23,12 @@ describe("the ASA agreement panel", () => {
     expect(screen.getByText("Все още няма финализирани случаи с предложение за ASA.")).toBeTruthy()
   })
 })
+
+describe("the ASA agreement panel in Bulgarian", () => {
+  it("names each rule in Bulgarian", () => {
+    render(<AsaAgreementPanel locale="bg" rows={[
+      { reasonCode: "copd", suggested: "III", cases: 20, agreed: 6, choseLower: 9, choseHigher: 5, suppressed: false },
+    ]} />)
+    expect(screen.getByText("ХОББ")).toBeTruthy()
+  })
+})
