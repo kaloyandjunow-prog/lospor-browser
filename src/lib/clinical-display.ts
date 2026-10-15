@@ -14,6 +14,7 @@ import type {
   ResearchDistributionId,
   ResearchTimelineEvent,
 } from "@lospor/core/research"
+import { displayResearchScore, isResearchScoreField } from "@lospor/core/research-scores"
 
 export type ClinicalChoice = {
   code: string
@@ -74,7 +75,12 @@ export function displayResearchFieldValue(
 ): string {
   if (value == null || value === "") return "?"
   if (typeof value === "boolean") return clinicalDisplayLabel("boolean", String(value), locale)
-  if (typeof value === "number") return String(value)
+  // A score arrives as its raw count; the maximum and the guideline band
+  // are added here: "3 / 4 · High (~ 60%)", not a bare "3".
+  if (typeof value === "number") {
+    if (isResearchScoreField(field)) return displayResearchScore(field, value, locale)
+    return field === "povocRiskPercent" ? `${value}%` : String(value)
+  }
 
   const domains: Partial<Record<string, ClinicalDisplayDomain>> = {
     ageUnit: "ageUnit",
