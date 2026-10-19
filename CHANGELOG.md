@@ -1,6 +1,6 @@
 # Changelog - LOSPOR Database
 
-## [Unreleased]
+## [0.9.1] - 2026-10-19
 
 ### Added
 
