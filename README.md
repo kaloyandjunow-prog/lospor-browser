@@ -28,8 +28,9 @@ The application never connects directly to PostgreSQL. It uses the versioned
 LOSPOR API for authentication, governed cohort queries, pseudonymous case
 inspection, quality reports, saved cohorts, benchmarks, and exports.
 
-The 1.2.0 release is coordinated with the matching LOSPOR API and Core release;
-do not mix it with an older research contract.
+The 0.11.0 release is coordinated with LOSPOR API 10.2.0 and Core 10.2.0;
+do not mix it with an older research contract. The Browser has its own version
+line because it is a separate research product.
 
 The Browser is not a permission manager. It consumes live, granular grants
 issued by the Hospital Status operator surface. A clinical account may request
