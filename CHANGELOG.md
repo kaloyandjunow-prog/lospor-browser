@@ -4,6 +4,10 @@
 
 ### Changed
 
+- **Research exports carry three more tables** without a change here: the export screen takes its tables from the
+  API, which now writes `care_site`, `device_exposure` (airway devices and blood units) and `death` (a death in
+  theatre) as well, and the case view shows an arterial line pressure as IBP. The Browser itself needed no code
+  change for 10.2.0: its typecheck, lint and 65 tests pass against Core 10.2.0.
 - **Shared Core pin:** advanced to v10.2.0 for the coordinated upstream
   release train. The Browser remains a separate product with its own 0.11.0
   version.
